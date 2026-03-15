@@ -127,7 +127,7 @@ export async function executeAgent({
     const rawResult = await result.json();
 
     // Normalize the response so the UI always has what it needs
-    return {
+    const normalizedResult = {
       taskId: txHash !== '0xDEMO_MODE' ? txHash : `0xTASK_${Date.now().toString(16)}`,
       agentId: agentId,
       status: rawResult.status || 'success',
@@ -137,6 +137,24 @@ export async function executeAgent({
       // The actual AI output — backends return it in `data` or `result`
       data: rawResult.data || rawResult.result || rawResult
     };
+
+    try {
+      const history = JSON.parse(localStorage.getItem('arenaHistory') || '[]');
+      history.unshift({
+        id: normalizedResult.taskId.substring(0, 10),
+        agentId: agentId,
+        cost: price,
+        executionTime: Math.floor(Date.now() / 1000),
+        statusNum: 1, // 1 = Success
+        result: normalizedResult.data,
+        txHash: txHash
+      });
+      localStorage.setItem('arenaHistory', JSON.stringify(history));
+    } catch (e) {
+      console.warn('Failed to save history', e);
+    }
+
+    return normalizedResult;
 
   } catch (err) {
     if (isDemoMode) {

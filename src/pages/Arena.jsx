@@ -97,7 +97,7 @@ export default function Arena() {
 
       const result = await executeAgent({
         agentId: winningAgent.id,
-        endpoint: `/api/agents/${agentCategory}/fake`,
+        endpoint: winningAgent.endpointUrl,
         price: winningBid.bidAmount,
         input: finalInputParams,
         walletClient: null,

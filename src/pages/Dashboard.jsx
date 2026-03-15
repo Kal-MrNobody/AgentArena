@@ -48,13 +48,10 @@ export default function Dashboard() {
     const reversed = [...userTasksRaw].reverse();
     
     reversed.forEach(raw => {
-      tasksRun++;
+      const stringId = raw.id.toString();
       const costRaw = Number(formatEther(raw.paymentAmount));
-      hlusdSpent += costRaw;
       
       const statusNum = raw.status;
-      if (statusNum === 1) successful++;
-      if (statusNum === 3) disputes++;
 
       // Find Agent Name
       const aId = Number(raw.agentId);
@@ -82,7 +79,7 @@ export default function Dashboard() {
       } catch (e) {}
 
       formattedTasks.push({
-        id: raw.id.toString(),
+        id: stringId,
         agentId: aId,
         agentName: aName,
         category: aCategory,
@@ -93,6 +90,49 @@ export default function Dashboard() {
       });
     });
   }
+
+  // Merge with local storage history
+  try {
+    const localHistory = JSON.parse(localStorage.getItem('arenaHistory') || '[]');
+    localHistory.forEach(raw => {
+      // don't duplicate if for some reason it's already in the smart contract results
+      if (formattedTasks.find(t => t.id === raw.id)) return;
+
+      const aId = Number(raw.agentId);
+      let aName = `Agent #${aId}`;
+      let aCategory = 'wildcard';
+      
+      const mockA = mockAgents.find(a => a.id === aId);
+      if (mockA) {
+        aName = mockA.name;
+        aCategory = mockA.category;
+      }
+
+      formattedTasks.push({
+        id: raw.id,
+        agentId: aId,
+        agentName: aName,
+        category: aCategory,
+        cost: Number(raw.cost || 0).toFixed(2),
+        executionTime: Number(raw.executionTime),
+        statusNum: raw.statusNum,
+        result: raw.result
+      });
+    });
+  } catch (e) {
+    console.error('Failed to parse local history', e);
+  }
+
+  // Sort unified tasks by execution time descending
+  formattedTasks.sort((a, b) => b.executionTime - a.executionTime);
+
+  // Recalculate stats cleanly based on unified history
+  formattedTasks.forEach(t => {
+    tasksRun++;
+    hlusdSpent += Number(t.cost);
+    if (t.statusNum === 1) successful++;
+    if (t.statusNum === 3) disputes++;
+  });
 
   if (!isConnected) {
     return (
