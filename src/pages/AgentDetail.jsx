@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, CheckCircle, XCircle, Lock, Shield, Swords, Activity } from 'lucide-react';
+import { ArrowLeft, Zap, CheckCircle, XCircle, Lock, Shield, Swords, Activity, BookOpen, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { useReadContract } from 'wagmi';
 import { useWallet } from '../hooks/useWallet';
 
@@ -21,6 +21,7 @@ export default function AgentDetail() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [executionResult, setExecutionResult] = useState(null);
+  const [openSample, setOpenSample] = useState(null);
 
   // 1. Fetch Agent from registry (fallback to mock)
   const agentIdNum = parseInt(id);
@@ -199,6 +200,72 @@ export default function AgentDetail() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Features List */}
+            {agent.features && agent.features.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="glass-card p-6"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-white">Capabilities</h3>
+                </div>
+                <ul className="space-y-2.5">
+                  {agent.features.map((feat, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-muted">
+                      <CheckCircle className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+
+            {/* Sample Tasks Portfolio */}
+            {agent.sampleTasks && agent.sampleTasks.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="glass-card p-6"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="w-5 h-5 text-warning" />
+                  <h3 className="text-lg font-semibold text-white">Sample Tasks</h3>
+                  <span className="ml-auto text-xs text-muted bg-background px-2 py-0.5 rounded-full border border-border">Developer Portfolio</span>
+                </div>
+                <div className="space-y-3">
+                  {agent.sampleTasks.map((sample, i) => (
+                    <div key={i} className="rounded-xl border border-border bg-background overflow-hidden">
+                      <button
+                        onClick={() => setOpenSample(openSample === i ? null : i)}
+                        className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+                      >
+                        <span className="text-sm font-medium text-white">{sample.title}</span>
+                        {openSample === i
+                          ? <ChevronUp className="w-4 h-4 text-muted shrink-0" />
+                          : <ChevronDown className="w-4 h-4 text-muted shrink-0" />}
+                      </button>
+                      {openSample === i && (
+                        <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+                          <div>
+                            <div className="text-xs text-muted uppercase tracking-widest mb-1.5">Input</div>
+                            <pre className="text-xs bg-black/40 text-primary p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">{JSON.stringify(sample.input, null, 2)}</pre>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted uppercase tracking-widest mb-1.5">Output Preview</div>
+                            <p className="text-sm text-white/80 bg-success/5 border border-success/20 p-3 rounded-lg leading-relaxed">{sample.output}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
 
           {/* Right: Task Form */}
