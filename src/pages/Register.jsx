@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, AlertTriangle, Zap, CheckCircle, Lock, Loader2 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
-import { usePublicClient, useWalletClient } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, createPublicClient, createWalletClient, custom } from 'viem';
 
 import FrameworkBadge from '../components/FrameworkBadge';
 import ReputationGauge from '../components/ReputationGauge';
@@ -28,8 +27,6 @@ const frameworks = ['LangChain', 'LangGraph', 'CrewAI', 'AutoGen'];
 export default function Register() {
   const { addToast } = useToast();
   const { isConnected, address } = useWallet();
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
 
   const [form, setForm] = useState({
     name: '',
@@ -86,6 +83,15 @@ export default function Register() {
 
     try {
       setIsDeploying(true);
+      
+      const publicClient = createPublicClient({
+        transport: custom(window.ethereum)
+      });
+      const walletClient = createWalletClient({
+        account: address,
+        transport: custom(window.ethereum)
+      });
+
       const stakeWei = parseUnits(form.stakedAmount, 18);
       const priceWei = parseUnits(form.pricePerCall, 18);
       const listingFeeWei = parseUnits("5", 18); // 5 HLUSD listing fee
@@ -120,16 +126,13 @@ export default function Register() {
       // For this hackathon demo build where we are forcing native connection, we will just use a generic toast notification since Agent creation is mocked on the backend anyway.
       
       const registerData = '0x00000000' // Mock function signature for demo
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: address,
-          to: CONTRACT_ADDRESSES.registry,
-          data: registerData,
-          value: '00', // No native HeLa needed for fake tx 
-        }],
+      const txHash = await walletClient.sendTransaction({
+        to: CONTRACT_ADDRESSES.registry,
+        data: registerData,
+        value: 0n, // No native HeLa needed for fake tx 
+        account: address
       });
-      
+
       console.log('Mock registration tx sent:', txHash);
       
       // Simulate waiting for block confirmation
