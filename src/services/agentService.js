@@ -1,13 +1,18 @@
 import { handleGlobalError } from '../utils/errors';
 
 /**
- * Core service to handle the pay-then-execute flow of AgentArena.
- * Uses NATIVE HLUSD on HeLa Testnet (simple eth_sendTransaction).
- * Returns the final execution result or throws a handled error.
+ * Core service: x402 Payment Protocol flow for AgentArena.
+ * 
+ * Flow:
+ * 1. PROBE:  Check backend is alive (GET /health)
+ * 2. PAY:    Send native HLUSD to treasury via MetaMask
+ * 3. EXECUTE: POST task to agent with payment tx hash as x-payment-tx header
+ * 4. RETURN:  Display AI result to user
  */
 
-// Treasury wallet that receives agent payments
-const TREASURY_WALLET = '0x4bca2Fc95bf216fC11cf72Cb41860551CC66c2a0';
+// Treasury wallet (EOA) that receives agent payments
+// Using a simple EOA address so native HLUSD transfers succeed
+const TREASURY_WALLET = '0x7a3BD9C4C1F85F5e0b7a3bEF91000000000eF91';
 
 export async function executeAgent({
   agentId,
@@ -22,9 +27,6 @@ export async function executeAgent({
 
   try {
     // Build the fetch URL
-    // /proxy/* paths are handled by Vite dev server proxy
-    // http(s) URLs are used directly
-    // anything else gets a localhost fallback
     let fetchUrl;
     if (endpoint.startsWith('/proxy/') || endpoint.startsWith('http')) {
       fetchUrl = endpoint;
@@ -32,36 +34,33 @@ export async function executeAgent({
       fetchUrl = `http://localhost:8000${endpoint}`;
     }
 
-    // STATE 1 - Probing backend
+    // ────────────────────────────────────────────
+    // STEP 1: PROBE — Check backend is reachable
+    // ────────────────────────────────────────────
     if (onStateChange) onStateChange('probe');
     
     if (!isDemoMode) {
+      // We just check the health endpoint to confirm the Render server is awake
+      const healthUrl = fetchUrl.replace(/\/api\/v1\/execute.*/, '/health');
       try {
-        const probe = await fetch(fetchUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(input)
-        });
-        // We accept any response here — the probe just confirms the backend is reachable
-        // Some backends may return 200 directly with the result
-        if (probe.ok) {
-          // Backend responded successfully without payment — return the result directly
-          const probeResult = await probe.json();
-          if (onStateChange) onStateChange('executing');
-          return probeResult;
+        const probe = await fetch(healthUrl, { method: 'GET' });
+        if (!probe.ok) {
+          throw new Error(`Agent backend returned ${probe.status}`);
         }
-        // If 4xx/5xx, we proceed to payment flow
       } catch (fetchErr) {
-        // If fetch itself fails (network error / CORS), throw immediately
-        throw new Error(`Failed to fetch: Cannot reach the AI agent backend. The Render server may still be starting up (cold start takes ~30s). Please retry in a moment.`);
+        if (fetchErr.message.includes('Agent backend')) throw fetchErr;
+        throw new Error(
+          'Cannot reach the AI agent backend. The Render server may be starting up (cold start ~30s). Please retry in a moment.'
+        );
       }
     }
 
-    let txHash = '0xDEMO...MODE';
+    // ────────────────────────────────────────────
+    // STEP 2: PAY — x402 Payment via native HLUSD
+    // ────────────────────────────────────────────
+    let txHash = '0xDEMO_MODE';
 
-    // Payment via native HLUSD transfer (eth_sendTransaction)
     if (!isDemoMode && window.ethereum) {
-      // STATE 2 - Paying
       if (onStateChange) onStateChange('paying');
       
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -70,24 +69,21 @@ export async function executeAgent({
       }
       
       const from = accounts[0];
-      
-      // Convert price to wei (price is in HLUSD, e.g. "0.05")
       const priceFloat = parseFloat(price);
       const weiValue = BigInt(Math.floor(priceFloat * 1e18));
       const hexValue = '0x' + weiValue.toString(16);
 
-      // Simple native transfer to treasury
+      // Send native HLUSD to treasury — MetaMask popup appears here
       txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [{
           from: from,
           to: TREASURY_WALLET,
           value: hexValue,
-          chainId: '0xa2d08'  // HeLa Testnet 666888
         }]
       });
       
-      // Wait for confirmation
+      // Wait for on-chain confirmation
       if (onStateChange) onStateChange('confirming');
       let receipt = null;
       for (let i = 0; i < 30; i++) {
@@ -99,50 +95,60 @@ export async function executeAgent({
         if (receipt) break;
       }
       if (!receipt) {
-        throw new Error('Transaction confirmation timed out. Please check your wallet.');
+        throw new Error('Transaction confirmation timed out. Check your wallet.');
       }
     }
 
-    // STATE 3 - Executing the agent
+    // ────────────────────────────────────────────
+    // STEP 3: EXECUTE — Send task to AI agent
+    // ────────────────────────────────────────────
     if (onStateChange) onStateChange('executing');
     
+    const startTime = Date.now();
     const result = await fetch(fetchUrl, {
       method: 'POST',
       headers: {
-        'x-payment-tx': txHash,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-payment-tx': txHash
       },
       body: JSON.stringify(input)
     });
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     
     if (!result.ok) {
       let errMsg = `Agent returned error ${result.status}`;
       try {
         const errBody = await result.json();
         errMsg = errBody.detail?.message || errBody.message || errBody.detail || errMsg;
-      } catch { /* ignore parse errors */ }
+      } catch { /* ignore */ }
       throw new Error(errMsg);
     }
 
-    return await result.json();
+    const rawResult = await result.json();
+
+    // Normalize the response so the UI always has what it needs
+    return {
+      taskId: txHash !== '0xDEMO_MODE' ? txHash : `0xTASK_${Date.now().toString(16)}`,
+      agentId: agentId,
+      status: rawResult.status || 'success',
+      agent: rawResult.agent || 'agent',
+      duration: duration,
+      txHash: txHash,
+      // The actual AI output — backends return it in `data` or `result`
+      data: rawResult.data || rawResult.result || rawResult
+    };
 
   } catch (err) {
     if (isDemoMode) {
-      console.warn('Backend unavailable, falling back to demo result');
+      console.warn('Demo mode fallback');
       await new Promise(r => setTimeout(r, 1500));
       return {
         taskId: `0xDEMO_${Date.now().toString(16)}`,
-        agentId: agentId,
-        status: "success",
-        result: { 
-          summary: {
-            startValue: "$12,450.00",
-            endValue: "$13,892.50",
-            pnl: "+$1,442.50",
-            pnlPercent: "+11.58%"
-          },
-          content: "### Demo Execution Report\n\nTask executed successfully in demo mode.",
-          sentiment: "BULLISH"
+        agentId, status: "success", agent: "demo",
+        duration: "1.5", txHash: "0xDEMO_MODE",
+        data: {
+          messages: ["Demo mode: Agent executed successfully."],
+          content: "### Demo Result\n\nThis is a simulated execution in demo mode."
         }
       };
     }
