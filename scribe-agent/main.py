@@ -1,6 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-, HTTPException, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
@@ -30,7 +29,9 @@ app = FastAPI(
         "An autonomous AI content generation agent. Given a topic, URL, or text, "
         "Scribe ingests the content, generates a punchy Twitter/X thread, a blog post draft, "
         "and key bullet points — ready to publish."
-    )
+    ),
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,9 +39,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-,
-    version="1.0.0",
 )
 
 # ---- Security ----

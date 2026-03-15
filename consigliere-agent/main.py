@@ -1,6 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-, HTTPException, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
@@ -30,7 +29,9 @@ app = FastAPI(
     description=(
         "An autonomous AI business advisor. Fetches live financial data from Yahoo Finance "
         "and uses Gemini AI to generate an executive briefing, SWOT analysis, and strategic recommendations."
-    )
+    ),
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,9 +39,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-,
-    version="1.0.0",
 )
 
 # ---- Security ----
