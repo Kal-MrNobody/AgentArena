@@ -12,7 +12,6 @@ export function useWallet() {
       const hlusdAddress = CONTRACT_ADDRESSES.hlusd;
       const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
-      // In demo mode with no real contract, show a realistic balance
       if (!hlusdAddress || hlusdAddress === '0x0000000000000000000000000000000000000000') {
         if (isDemoMode) {
           setBalance('15.00');
@@ -21,13 +20,29 @@ export function useWallet() {
         }
         return;
       }
+
+      // Check Chain ID first
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      // 666888 in hex is 0xa2d08
+      if (chainId !== '0xa2d08') {
+        console.warn('Wrong network. Please switch to HeLa Official Runtime Testnet (666888)');
+        setBalance('0.00');
+        return;
+      }
+
       const data = '0x70a08231' + addr.replace('0x', '').padStart(64, '0');
       const result = await window.ethereum.request({
         method: 'eth_call',
         params: [{ to: hlusdAddress, data }, 'latest']
       });
-      const wei = parseInt(result, 16);
-      setBalance(isNaN(wei) ? '0.00' : (wei / 1e18).toFixed(2));
+      // Handle the 0x result appropriately
+      if (result === '0x' || result === '0x0') {
+         setBalance('0.00');
+      } else {
+         const wei = BigInt(result);
+         const balanceInHLUSD = Number(wei) / 1e18;
+         setBalance(balanceInHLUSD.toFixed(3));
+      }
     } catch (err) {
       console.error('fetchBalance error:', err);
       setBalance('0.00');
@@ -87,6 +102,34 @@ export function useWallet() {
     try {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       if (accounts && accounts.length > 0) {
+        
+        // Enforce HeLa Testnet
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (chainId !== '0xa2d08') {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0xa2d08' }],
+            });
+          } catch (switchError) {
+             // If chain doesn't exist, try adding it
+             if (switchError.code === 4902) {
+               await window.ethereum.request({
+                 method: 'wallet_addEthereumChain',
+                 params: [{
+                   chainId: '0xa2d08',
+                   chainName: 'HeLa Official Runtime Testnet',
+                   nativeCurrency: { name: 'HLUSD', symbol: 'HLUSD', decimals: 18 },
+                   rpcUrls: ['https://testnet-rpc.helachain.com'],
+                   blockExplorerUrls: ['https://testnet-explorer.helachain.com']
+                 }]
+               });
+             } else {
+                 console.error('Failed to switch network:', switchError);
+             }
+          }
+        }
+
         setAddress(accounts[0]);
         setIsConnected(true);
         fetchBalance(accounts[0]);
