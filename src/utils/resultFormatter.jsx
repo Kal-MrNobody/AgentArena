@@ -93,6 +93,31 @@ export const formatAgentResult = (agentCategory, resultData) => {
     case 'finance':
       return (
         <div className="space-y-4">
+          {/* Universal Agent Messages */}
+          {resultData.messages && resultData.messages.length > 0 && (
+             <div className="bg-agent-card rounded-lg p-4 border border-agent-border mb-4">
+                <h4 className="text-sm font-semibold text-agent-muted mb-2">Execution Log</h4>
+                <ul className="text-xs text-agent-primary space-y-1 font-mono">
+                  {resultData.messages.map((m, i) => (
+                    <li key={i}>&gt; {m}</li>
+                  ))}
+                </ul>
+             </div>
+          )}
+
+          {/* Tax Agent Specific */}
+          {resultData.tax_report && (
+            <div className="bg-agent-card rounded-lg p-5 border border-agent-border">
+              <h4 className="text-sm font-semibold text-[#00D4FF] mb-3">Generated Tax Report</h4>
+              <div className="whitespace-pre-wrap text-sm text-gray-200 leading-relaxed font-sans">
+                {resultData.tax_report}
+              </div>
+              <div className="mt-4 pt-4 border-t border-agent-border text-right">
+                 <button onClick={() => navigator.clipboard.writeText(resultData.tax_report)} className="text-xs text-[#00FF94] hover:underline">Copy Document</button>
+              </div>
+            </div>
+          )}
+
           {resultData.summary && (
             <div className="grid grid-cols-2 gap-4">
                <div className="bg-agent-card p-4 rounded-lg border border-agent-border">
@@ -120,6 +145,13 @@ export const formatAgentResult = (agentCategory, resultData) => {
                     <div className="text-lg font-bold text-[#FFB800]">{resultData.riskLevel}</div>
                 </div>
              </div>
+          )}
+
+          {/* Fallback for unrecognized finance schemas */}
+          {!resultData.summary && !resultData.riskScore && !resultData.tax_report && !resultData.messages && (
+            <pre className="bg-[#0A0A0F] p-4 rounded-lg overflow-x-auto text-xs text-[#00D4FF] font-mono border border-agent-border">
+              {JSON.stringify(resultData, null, 2)}
+            </pre>
           )}
         </div>
       );
