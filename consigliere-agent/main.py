@@ -319,9 +319,9 @@ executed_keys = {}
 async def health_check():
     return {"status": "ok", "agent": "consigliere", "version": "1.0.0", "model": "gemini-2.0-flash"}
 
-@app.post("/api/v1/advise", response_model=AgentResponse, tags=["Agent Execution"],
+@app.post("/api/v1/execute", response_model=AgentResponse, tags=["Agent Execution"],
           summary="Get a full business intelligence report powered by Yahoo Finance + Gemini AI",
-          dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+          dependencies=[Depends(rate_limit)])
 async def run_consigliere(payload: ConsigliereInput):
     """
     Fetches live financial data from Yahoo Finance for the given ticker and uses Gemini AI to

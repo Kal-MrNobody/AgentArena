@@ -229,9 +229,9 @@ executed_keys = {}
 async def health_check():
     return {"status": "ok", "agent": "harvester", "version": "2.0.0", "data_source": "DeFiLlama live API"}
 
-@app.post("/api/v1/harvest", response_model=AgentResponse, tags=["Agent Execution"],
+@app.post("/api/v1/execute", response_model=AgentResponse, tags=["Agent Execution"],
           summary="Find the highest-yield DeFi pool for a given token (live data)",
-          dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+          dependencies=[Depends(rate_limit)])
 async def run_harvester(payload: HarvestInput):
     """Uses live DeFiLlama data to find and rank the best yield farming opportunity."""
     if payload.idempotency_key and payload.idempotency_key in executed_keys:

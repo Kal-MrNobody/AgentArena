@@ -89,7 +89,7 @@ summary_agent = workflow.compile()
 @app.get("/health")
 async def health(): return {"status": "ok", "agent": "executive-summarizer"}
 
-@app.post("/api/v1/summarize", response_model=AgentResponse, dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+@app.post("/api/v1/execute", response_model=AgentResponse, dependencies=[Depends(rate_limit)])
 async def summarize(payload: SummaryInput):
     state: SummaryState = {"input_params": payload.dict(), "cleaned_transcript": "", "executive_summary": "", "messages": []}
     return AgentResponse(status="success", agent="executive-summarizer", data=summary_agent.invoke(state))

@@ -248,9 +248,9 @@ executed_keys = {}
 async def health_check():
     return {"status": "ok", "agent": "sniper", "version": "2.0.0", "data_source": "CoinGecko live API"}
 
-@app.post("/api/v1/snipe", response_model=AgentResponse, tags=["Agent Execution"],
+@app.post("/api/v1/execute", response_model=AgentResponse, tags=["Agent Execution"],
           summary="Detect real-time arbitrage opportunity across exchanges (live data)",
-          dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+          dependencies=[Depends(rate_limit)])
 async def run_sniper(payload: SnipeInput):
     """Uses live CoinGecko exchange tickers to detect real price spreads and execute arbitrage."""
     if payload.idempotency_key and payload.idempotency_key in executed_keys:

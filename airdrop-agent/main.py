@@ -88,7 +88,7 @@ airdrop_agent = workflow.compile()
 @app.get("/health")
 async def health(): return {"status": "ok", "agent": "airdrop-hunter"}
 
-@app.post("/api/v1/hunt", response_model=AgentResponse, dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+@app.post("/api/v1/execute", response_model=AgentResponse, dependencies=[Depends(rate_limit)])
 async def hunt(payload: AirdropInput):
     state: AirdropState = {"input_params": payload.dict(), "active_campaigns": [], "execution_route": "", "messages": []}
     return AgentResponse(status="success", agent="airdrop-hunter", data=airdrop_agent.invoke(state))

@@ -92,7 +92,7 @@ whale_agent = workflow.compile()
 @app.get("/health")
 async def health(): return {"status": "ok", "agent": "whale-watcher"}
 
-@app.post("/api/v1/scan", response_model=AgentResponse, dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+@app.post("/api/v1/execute", response_model=AgentResponse, dependencies=[Depends(rate_limit)])
 async def run_scan(payload: WhaleInput):
     state: WhaleState = {"input_params": payload.dict(), "recent_txs": [], "analysis": "", "messages": []}
     return AgentResponse(status="success", agent="whale-watcher", data=whale_agent.invoke(state))

@@ -179,9 +179,9 @@ executed_keys = {}
 async def health_check():
     return {"status": "ok", "agent": "atlas", "version": "2.0.0", "data_source": "CoinGecko live API"}
 
-@app.post("/api/v1/rebalance", response_model=AgentResponse, tags=["Agent Execution"],
+@app.post("/api/v1/execute", response_model=AgentResponse, tags=["Agent Execution"],
           summary="Rebalance a portfolio using live CoinGecko price data",
-          dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+          dependencies=[Depends(rate_limit)])
 async def run_rebalance(payload: BalancesInput):
     """Calculates real-time portfolio drift using live ETH/BTC prices and generates rebalancing trades."""
     if payload.idempotency_key and payload.idempotency_key in executed_keys:

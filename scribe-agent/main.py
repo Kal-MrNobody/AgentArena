@@ -260,9 +260,9 @@ executed_keys = {}
 async def health_check():
     return {"status": "ok", "agent": "scribe", "version": "1.0.0", "model": "gemini-2.0-flash"}
 
-@app.post("/api/v1/write", response_model=AgentResponse, tags=["Agent Execution"],
+@app.post("/api/v1/execute", response_model=AgentResponse, tags=["Agent Execution"],
           summary="Generate a Twitter thread, blog post, and bullet points from any content",
-          dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+          dependencies=[Depends(rate_limit)])
 async def run_scribe(payload: ScribeInput):
     """
     Ingests a topic, URL, or raw text. Uses Gemini AI to generate a full content package:

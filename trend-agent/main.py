@@ -219,8 +219,8 @@ executed_keys = {}
 async def health_check():
     return {"status": "ok", "agent": "trend-spotter", "version": "1.0.0", "model": "gemini-2.0-flash"}
 
-@app.post("/api/v1/spot", response_model=AgentResponse, tags=["Agent Execution"],
-          dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+@app.post("/api/v1/execute", response_model=AgentResponse, tags=["Agent Execution"],
+          dependencies=[Depends(rate_limit)])
 async def run_trend_spotter(payload: TrendInput):
     """Fetches trending Web3 data and uses Gemini to synthesize narratives."""
     if payload.idempotency_key and payload.idempotency_key in executed_keys:

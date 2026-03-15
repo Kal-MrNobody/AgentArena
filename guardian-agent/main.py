@@ -102,7 +102,7 @@ guardian_agent = workflow.compile()
 @app.get("/health")
 async def health(): return {"status": "ok", "agent": "guardian", "model": "gemini-2.0-flash"}
 
-@app.post("/api/v1/audit", response_model=AgentResponse, dependencies=[Depends(verify_api_key), Depends(rate_limit)])
+@app.post("/api/v1/execute", response_model=AgentResponse, dependencies=[Depends(rate_limit)])
 async def run_audit(payload: AuditInput):
     state: AuditState = {"input_params": payload.dict(), "source_code": "", "vulnerabilities": [], "risk_score": 100, "audit_report": "", "messages": []}
     final = guardian_agent.invoke(state)
