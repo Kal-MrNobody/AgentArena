@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Zap, Menu, X, Swords, LayoutDashboard, Store, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '../hooks/useWallet';
-import FaucetWidget from './FaucetWidget';
+
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
