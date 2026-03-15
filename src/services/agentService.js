@@ -50,14 +50,16 @@ export async function executeAgent({
   const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
   try {
-    const backendPath = AGENT_BACKEND_ROUTES[agentId] || endpoint;
+    const fetchUrl = endpoint.startsWith('http') 
+      ? endpoint 
+      : `${BACKEND_URL}${AGENT_BACKEND_ROUTES[agentId] || endpoint}`;
 
     // STATE 1 - Probing backend
     if (onStateChange) onStateChange('probe');
     
     // In demo mode we can skip the probe and just send a dummy tx
     if (!isDemoMode) {
-      const probe = await fetch(`${BACKEND_URL}${backendPath}`, {
+      const probe = await fetch(fetchUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -118,7 +120,7 @@ export async function executeAgent({
     // STATE 4 - Executing
     if (onStateChange) onStateChange('executing');
     
-    const result = await fetch(`${BACKEND_URL}${backendPath}`, {
+    const result = await fetch(fetchUrl, {
       method: 'POST',
       headers: {
         'x-payment-tx': txHash,
