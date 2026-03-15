@@ -6,7 +6,7 @@ export const agents = [
     successCount: Math.round(0.98 * 1402), stakedAmount: 500, isActive: true,
     walletAddress: "0x7a3B...eF91", description: "Rebalances portfolios based on target asset allocations using live CoinGecko data.",
     endpointUrl: "https://atlas-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { ETH: "number", BTC: "number", USDC: "number" }
   },
   {
     id: 2, name: "Sniper Bot", category: "defi", framework: "LangGraph",
@@ -14,7 +14,7 @@ export const agents = [
     successCount: Math.round(0.96 * 890), stakedAmount: 1000, isActive: true,
     walletAddress: "0x1bA4...dE85", description: "Identifies and executes arbitrage opportunities using real-time prices.",
     endpointUrl: "https://sniper-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { target_token: "string", quote_currency: "string", trade_volume_usd: "number", min_profit_threshold: "number" }
   },
   {
     id: 3, name: "Yield Harvester", category: "defi", framework: "CrewAI",
@@ -22,7 +22,7 @@ export const agents = [
     successCount: Math.round(0.94 * 2104), stakedAmount: 400, isActive: true,
     walletAddress: "0x3cD1...aB42", description: "Scans DeFi protocols for high APY pools using live DeFiLlama data.",
     endpointUrl: "https://harvester-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { deposit_token: "string", deposit_amount_usd: "number", chain: "string" }
   },
   {
     id: 4, name: "Airdrop Hunter", category: "defi", framework: "CrewAI",
@@ -40,7 +40,7 @@ export const agents = [
     successCount: Math.round(0.99 * 512), stakedAmount: 300, isActive: true,
     walletAddress: "0x4eF0...bC21", description: "Schedules on-chain actions based on live conditions (gas prices, token prices).",
     endpointUrl: "https://chrono-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { action_type: "string", token: "string", amount_usd: "number", recipient_address: "address", frequency: "string", max_gas_gwei: "number", price_trigger_usd: "number", description: "string" }
   },
   {
     id: 6, name: "Consigliere BI", category: "business", framework: "CrewAI",
@@ -48,7 +48,7 @@ export const agents = [
     successCount: Math.round(0.97 * 341), stakedAmount: 1500, isActive: true,
     walletAddress: "0x8cD4...fA65", description: "Provides elite business strategy analysis using Yahoo Finance and Gemini AI.",
     endpointUrl: "https://consigliere-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { ticker: "string", business_question: "string", company_name: "string", industry: "string" }
   },
   {
     id: 7, name: "Podcast Summarizer", category: "business", framework: "CrewAI",
@@ -66,7 +66,7 @@ export const agents = [
     successCount: Math.round(0.92 * 687), stakedAmount: 200, isActive: true,
     walletAddress: "0x4cD2...aF43", description: "Generates viral content (X threads, blog posts) using Gemini AI intelligence.",
     endpointUrl: "https://scribe-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { topic: "string", source_url: "string", raw_text: "string", tone: "string", audience: "string" }
   },
 
   // CATEGORY: Data Analysis (analysis)
@@ -76,7 +76,7 @@ export const agents = [
     successCount: Math.round(0.95 * 1654), stakedAmount: 480, isActive: true,
     walletAddress: "0x8eF4...bC65", description: "Analyzes global trending data from CoinGecko and synthesizes market narratives.",
     endpointUrl: "https://trend-agent-ynj0.onrender.com/api/v1/execute",
-    taskInputSchema: { command: "string", constraints: "string" }
+    taskInputSchema: { query: "string", timeframe: "string", sources: "string" }
   },
   {
     id: 10, name: "Whale Watcher", category: "analysis", framework: "LangGraph",
