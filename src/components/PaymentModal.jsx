@@ -28,25 +28,9 @@ export default function PaymentModal({ isOpen, onClose, agent, inputData, onSucc
       return;
     }
 
-    // Per-category default values so backend never gets "Missing required fields"
+    // Pass exactly what the user typed in the dynamic agent schema form
     const agentCategory = (agent.category || '').toLowerCase();
-    const categoryDefaults = {
-      defi:      { slippageTolerance: '0.5', direction: 'BUY', token: 'HELA', amount: '10' },
-      content:   { platform: 'twitter', tone: 'casual', length: 'short',
-                   niche: 'DeFi', frequency: 'daily', weeks: '4',
-                   targetPlatforms: 'twitter,linkedin', targetKeywords: 'HeLa,Web3' },
-      analysis:  { timeWindow: '30d', walletAddress: '0x00', alertType: 'on-chain', 
-                   condition: 'price_above', threshold: '3000', query: 'DeFi trends' },
-      business:  { action: 'notify', cronExpression: '0 9 * * *', period: '7d',
-                   reportType: 'DeFi', meetingContext: 'team sync',
-                   notificationType: 'telegram', conditions: 'price>3000' },
-      finance:   { period: '30d', savingsPercent: '10',
-                   targetVault: '0x0000000000000000000000000000000000000000',
-                   taxYear: '2025', jurisdiction: 'US' },
-    };
-
-    const defaults = categoryDefaults[agentCategory] || {};
-    const payload = { ...defaults, ...inputData };
+    const payload = { ...inputData };
 
     try {
       const execResult = await executeAgent({

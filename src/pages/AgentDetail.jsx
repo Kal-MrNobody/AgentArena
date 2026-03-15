@@ -13,42 +13,6 @@ import PaymentModal from '../components/PaymentModal';
 import ResultModal from '../components/ResultModal';
 import FaucetWidget from '../components/FaucetWidget';
 
-const categoryFields = {
-  defi: [
-    { name: 'token', label: 'Token', placeholder: 'e.g. HELA, USDC' },
-    { name: 'amount', label: 'Amount', placeholder: '100', type: 'number' },
-    { name: 'direction', label: 'Action Type', placeholder: 'BUY or SELL' },
-    { name: 'slippageTolerance', label: 'Slippage Tolerance', type: 'select',
-      options: ['0.1', '0.5', '1.0', '2.0'], defaultValue: '0.5',
-      helper: '% max price difference allowed' },
-    { name: 'wallet', label: 'Wallet Address', placeholder: '0x...' },
-  ],
-  content: [
-    { name: 'topic', label: 'Topic / Content Payload', placeholder: 'What should the agent write about? e.g. HeLa L2 launch' },
-    { name: 'platform', label: 'Platform', placeholder: 'twitter, linkedin, blog' },
-    { name: 'tone', label: 'Tone', placeholder: 'professional, viral, technical' },
-    { name: 'length', label: 'Length', placeholder: 'short, medium, long' },
-    { name: 'targetKeywords', label: 'Keywords (for SEO)', placeholder: 'HeLa, DeFi, yield' },
-  ],
-  analysis: [
-    { name: 'walletAddress', label: 'Wallet Address (for tracking / risk)', placeholder: '0x...' },
-    { name: 'query', label: 'Query (for Trend Spotter)', placeholder: 'e.g. Layer 2 scaling trends' },
-    { name: 'timeWindow', label: 'Time Window', placeholder: 'e.g. 24h, 7d, 30d' },
-    { name: 'alertType', label: 'Alert Channel', placeholder: 'telegram, email, on-chain' },
-  ],
-  business: [
-    { name: 'taskDescription', label: 'Task Description / Action', placeholder: 'What should the agent do?' },
-    { name: 'cronExpression', label: 'Cron Schedule (for automation)', placeholder: '0 9 * * * (9am daily)' },
-    { name: 'meetingNotes', label: 'Meeting Notes (for Summarizer)', placeholder: 'Paste raw notes here...' },
-    { name: 'conditions', label: 'Notification Conditions', placeholder: 'e.g. event=Transfer' },
-  ],
-  finance: [
-    { name: 'wallet', label: 'Wallet Address', placeholder: '0x...' },
-    { name: 'period', label: 'Time Period (for Budget)', placeholder: '7d, 30d, 1y' },
-    { name: 'savingsPercent', label: 'Savings % (for Automator)', placeholder: '10', type: 'number' },
-    { name: 'taxYear', label: 'Tax Year', placeholder: '2025' },
-  ]
-};
 
 export default function AgentDetail() {
   const { id } = useParams();
@@ -94,25 +58,20 @@ export default function AgentDetail() {
     reputationScore: repData ? Number(repData) : mockAgent.reputationScore,
   } : null;
 
+  // Initialize form data based on the agent's taskInputSchema
   useEffect(() => {
-    if (address && !formData.wallet) {
-      setFormData(prev => ({ ...prev, wallet: address }));
+    if (agent?.taskInputSchema && Object.keys(formData).length === 0) {
+      const initialData = {};
+      Object.keys(agent.taskInputSchema).forEach(key => {
+        initialData[key] = '';
+      });
+      // Optionally auto-fill wallet if the schema asks for it
+      if (address && 'wallet' in initialData) initialData['wallet'] = address;
+      if (address && 'wallet_address' in initialData) initialData['wallet_address'] = address;
+      
+      setFormData(initialData);
     }
-  }, [address]);
-
-  // Initialize default values for fields that have them (e.g. slippageTolerance)
-  useEffect(() => {
-    if (!fields) return;
-    const defaults = {};
-    fields.forEach(f => {
-      if (f.defaultValue && !formData[f.name]) {
-        defaults[f.name] = f.defaultValue;
-      }
-    });
-    if (Object.keys(defaults).length > 0) {
-      setFormData(prev => ({ ...prev, ...defaults }));
-    }
-  }, []);
+  }, [agent, address]);
 
   if (!agent) {
     return (
@@ -129,7 +88,7 @@ export default function AgentDetail() {
     ? ((agent.successCount / agent.totalTasksCompleted) * 100).toFixed(1) 
     : "100.0";
   
-  const fields = categoryFields[agent.category.toLowerCase()] || categoryFields.wildcard;
+  const schemaKeys = Object.keys(agent.taskInputSchema || {});
   const mockTaskResults = [true, true, true, false, true]; // visual candy
 
   const handlePaymentSuccess = (result) => {
@@ -252,33 +211,23 @@ export default function AgentDetail() {
           >
             <h3 className="text-lg font-semibold text-white mb-6">Execute Task</h3>
             <div className="space-y-4 mb-6">
-              {fields.map(field => (
-                <div key={field.name}>
-                  <label className="block text-sm text-muted mb-1.5">{field.label}</label>
-                  {field.type === 'select' ? (
-                    <select
-                      value={formData[field.name] || field.defaultValue || ''}
-                      onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                      className="input-field"
-                    >
-                      {field.options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  ) : (
+              {schemaKeys.map(key => {
+                const typeHint = agent.taskInputSchema[key];
+                const cleanLabel = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                return (
+                  <div key={key}>
+                    <label className="block text-sm text-muted mb-1.5">{cleanLabel} <span className="text-xs opacity-50">({typeHint})</span></label>
                     <input
-                      type={field.type || 'text'}
-                      placeholder={field.placeholder}
-                      value={formData[field.name] || ''}
-                      onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                      className="input-field"
+                     type={typeHint === 'number' ? 'number' : 'text'}
+                     placeholder={`Enter ${cleanLabel.toLowerCase()}...`}
+                     value={formData[key] || ''}
+                     onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                     className="input-field"
                     />
-                  )}
-                  {field.helper && (
-                    <p className="text-xs text-muted mt-1">{field.helper}</p>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-xl bg-background mb-4 border border-border">
