@@ -40,6 +40,7 @@ export default function Register() {
 
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState(0); // 0 = none, 1 = approving, 2 = registering
+  const [minStake, setMinStake] = useState(100);
 
   const update = (field, value) => setForm({ ...form, [field]: value });
 
@@ -67,7 +68,7 @@ export default function Register() {
     if (!form.endpointUrl.trim()) return addToast('Endpoint URL is required', 'warning');
     if (!form.description.trim()) return addToast('Description is required', 'warning');
     const stakeNum = parseFloat(form.stakedAmount);
-    if (isNaN(stakeNum) || stakeNum < 100) return addToast('Minimum stake is 100 HLUSD', 'warning');
+    if (isNaN(stakeNum) || stakeNum < minStake) return addToast(`Minimum stake is ${minStake} HLUSD`, 'warning');
     const priceNum = parseFloat(form.pricePerCall);
     if (isNaN(priceNum) || priceNum <= 0) return addToast('Valid price required', 'warning');
 
@@ -246,17 +247,35 @@ export default function Register() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-1.5">
-                  Initial Stake Amount <span className="text-muted font-normal">— min: 100 HLUSD</span>
-                </label>
-                <div className="relative">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-white">
+                    Initial Stake Amount <span className="text-muted font-normal">— min: {minStake} HLUSD</span>
+                  </label>
+                  <div className="flex bg-background border border-border rounded-lg overflow-hidden">
+                    <button 
+                      onClick={() => { setMinStake(100); update('stakedAmount', '100'); }}
+                      className={`px-3 py-1 text-xs font-semibold transition-colors ${minStake === 100 ? 'bg-primary text-background' : 'text-muted hover:text-white'}`}
+                      disabled={isDeploying}
+                    >
+                      100 HLUSD
+                    </button>
+                    <button 
+                      onClick={() => { setMinStake(8); update('stakedAmount', '8'); }}
+                      className={`px-3 py-1 text-xs font-semibold transition-colors ${minStake === 8 ? 'bg-[#FFB800] text-background' : 'text-muted hover:text-white'}`}
+                      disabled={isDeploying}
+                    >
+                      8 HLUSD (Showcase)
+                    </button>
+                  </div>
+                </div>
+                <div className="relative mt-2">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warning" />
                   <input
                     type="number"
                     value={form.stakedAmount}
                     onChange={(e) => update('stakedAmount', e.target.value)}
                     className="input-field pl-10"
-                    min="100"
+                    min={minStake}
                     disabled={isDeploying}
                   />
                 </div>
