@@ -8,6 +8,7 @@ import { categories } from '../data/agents';
 import { useToast } from '../components/Toast';
 import { executeAgent } from '../services/agentService';
 import { formatAgentResult } from '../utils/resultFormatter';
+import ArenaCompare from '../components/ArenaCompare';
 
 const categoryTasks = {
   all: "",
@@ -41,6 +42,8 @@ export default function Arena() {
   
   // New state for dynamic agent inputs
   const [agentFormData, setAgentFormData] = useState({});
+  // All bids from the live arena (for comparison)
+  const [arenaBids, setArenaBids] = useState([]);
 
   const { addToast } = useToast();
 
@@ -53,9 +56,11 @@ export default function Arena() {
     addToast('⚔️ Arena opened! Waiting for bids...', 'info');
   };
 
-  const handleWinnerSelected = (bid) => {
+  const handleWinnerSelected = (bid, allBids) => {
     setWinningAgent(bid.agent);
     setWinningBid(bid);
+    // Store all bids so user can use Compare later
+    if (allBids && allBids.length > 0) setArenaBids(allBids);
     
     // Initialize form data based on the winning agent's schema
     const initialData = {};
@@ -135,6 +140,7 @@ export default function Arena() {
     setWinningBid(null);
     setExecResult(null);
     setAgentFormData({});
+    setArenaBids([]);
   };
 
   return (
@@ -359,13 +365,32 @@ export default function Arena() {
               </div>
             )}
 
-            <button
-              onClick={handleReset}
-              className="glow-btn text-white px-8 py-3 rounded-xl font-semibold"
-            >
-              Open New Arena
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleReset}
+                className="glow-btn text-white px-8 py-3 rounded-xl font-semibold"
+              >
+                Open New Arena
+              </button>
+              {arenaBids.length >= 2 && (
+                <button
+                  onClick={() => setState('compare')}
+                  className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-semibold border-2 border-primary/40 text-primary hover:bg-primary/10 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                  Compare Agents
+                </button>
+              )}
+            </div>
           </motion.div>
+        ) : state === 'compare' ? (
+          <ArenaCompare
+            bids={arenaBids}
+            task={task}
+            agentFormData={agentFormData}
+            onReset={handleReset}
+            onBack={() => setState('done')}
+          />
         ) : null}
       </div>
 

@@ -109,7 +109,7 @@ export default function ArenaLive({ task, category, maxBudget, duration, onWinne
     });
     setTimeout(() => {
       setExecuting(false);
-      onWinnerSelected?.(bid);
+      onWinnerSelected?.(bid, bids);
     }, 2000);
   };
 
