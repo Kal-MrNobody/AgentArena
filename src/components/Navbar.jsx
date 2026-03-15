@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Zap, Menu, X, Swords, LayoutDashboard, Store, BarChart3 } from 'lucide-react';
+import { Zap, Menu, X, Swords, LayoutDashboard, Store, BarChart3, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '../hooks/useWallet';
 
@@ -16,6 +16,7 @@ export default function Navbar() {
     { to: '/arena', label: '⚔️ Arena', icon: <Swords className="w-4 h-4" /> },
     { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { to: '/protocol', label: 'Protocol', icon: <BarChart3 className="w-4 h-4" /> },
+    { to: '/scheduler', label: '⏱ Scheduler', icon: <Timer className="w-4 h-4" /> },
   ];
 
   const isActive = (path) => location.pathname === path;

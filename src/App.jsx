@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
 import ManageAgent from './pages/ManageAgent';
 import Protocol from './pages/Protocol';
+import Scheduler from './pages/Scheduler';
 
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -38,6 +39,7 @@ function AnimatedRoutes() {
           <Route path="/register" element={<Register />} />
           <Route path="/manage/:id" element={<ManageAgent />} />
           <Route path="/protocol" element={<Protocol />} />
+          <Route path="/scheduler" element={<Scheduler />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
